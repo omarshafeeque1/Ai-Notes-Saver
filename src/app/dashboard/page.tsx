@@ -50,11 +50,11 @@ export default function DashboardPage() {
   const [isSaving, setIsSaving] = useState(false)
   const [sortBy, setSortBy] = useState<'desc' | 'asc'>('desc')
   
-  const supabase = createClient()
   const router = useRouter()
 
   useEffect(() => {
     const checkUser = async () => {
+      const supabase = createClient()
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) {
         router.push('/login')
@@ -281,6 +281,7 @@ export default function DashboardPage() {
   }
 
   const handleSignOut = async () => {
+    const supabase = createClient()
     await supabase.auth.signOut()
     router.push('/')
   }
