@@ -4,26 +4,39 @@ import { createClient } from '@/lib/supabase/server'
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url)
   const code = searchParams.get('code')
-  // if "next" is in search params, use it as the redirection URL
   const next = searchParams.get('next') ?? '/dashboard'
 
+  console.log('[auth/callback] Received. code:', code ? 'present' : 'missing', 'origin:', origin)
+
   if (code) {
-    const supabase = await createClient()
-    const { error } = await supabase.auth.exchangeCodeForSession(code)
-    if (!error) {
-      const forwardedHost = request.headers.get('x-forwarded-host') // x-forwarded-host is a header that contains the host name of the client
-      const isLocalEnv = process.env.NODE_ENV === 'development'
-      if (isLocalEnv) {
-        // we can be sure that origin is the correct origin in local development
-        return NextResponse.redirect(`${origin}${next}`)
-      } else if (forwardedHost) {
-        return NextResponse.redirect(`https://${forwardedHost}${next}`)
+    try {
+      const supabase = await createClient()
+      const { data, error } = await supabase.auth.exchangeCodeForSession(code)
+      
+      console.log('[auth/callback] exchangeCodeForSession result:', error ? error.message : 'success', 'user:', data?.user?.email)
+
+      if (!error) {
+        const forwardedHost = request.headers.get('x-forwarded-host')
+        const isLocalEnv = process.env.NODE_ENV === 'development'
+        
+        const redirectTo = isLocalEnv
+          ? `${origin}${next}`
+          : forwardedHost
+            ? `https://${forwardedHost}${next}`
+            : `${origin}${next}`
+        
+        console.log('[auth/callback] Redirecting to:', redirectTo)
+        return NextResponse.redirect(redirectTo)
       } else {
-        return NextResponse.redirect(`${origin}${next}`)
+        console.error('[auth/callback] Auth error:', error.message, error.status)
+        return NextResponse.redirect(`${origin}/login?error=${encodeURIComponent(error.message)}`)
       }
+    } catch (e: any) {
+      console.error('[auth/callback] Exception:', e.message)
+      return NextResponse.redirect(`${origin}/login?error=${encodeURIComponent(e.message)}`)
     }
   }
 
-  // return the user to an error page with instructions
-  return NextResponse.redirect(`${origin}/login?error=auth_failed`)
+  console.log('[auth/callback] No code param found')
+  return NextResponse.redirect(`${origin}/login?error=no_code`)
 }
