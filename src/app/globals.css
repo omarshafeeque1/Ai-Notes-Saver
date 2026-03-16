@@ -1,0 +1,122 @@
+@import "tailwindcss";
+@source "../**/*.{ts,tsx}";
+
+@theme {
+  --font-sans: var(--font-inter), var(--font-outfit), sans-serif;
+  
+  --color-background: #000000;
+  --color-foreground: #ffffff;
+  --color-accent-primary: #8b5cf6;
+  --color-accent-secondary: #3b82f6;
+  
+  --spacing-tightest: -0.075em;
+}
+
+:root {
+  --background: #000000;
+  --foreground: #ffffff;
+  --accent-primary: #8b5cf6;
+  --accent-secondary: #3b82f6;
+  --border-color: rgba(255, 255, 255, 0.1);
+  --glass-bg: rgba(255, 255, 255, 0.02);
+  --glass-blur: 20px;
+}
+
+/* Base Styles */
+@layer base {
+  * {
+    @apply border-white/10;
+  }
+  body {
+    @apply bg-black text-white antialiased selection:bg-purple-500/30;
+    font-family: var(--font-sans);
+  }
+}
+
+.glass {
+  background: var(--glass-bg);
+  backdrop-filter: blur(var(--glass-blur));
+  border: 1px solid var(--border-color);
+}
+
+.text-glow {
+  background: linear-gradient(to bottom, #fff 30%, rgba(255, 255, 255, 0.5));
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* Linear-style Background */
+.bg-grid {
+  background-size: 40px 40px;
+  background-image: 
+    linear-gradient(to right, rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+}
+
+/* Mesh Blobs for SaaS */
+.mesh {
+  position: fixed;
+  width: 100vw;
+  height: 100vh;
+  top: 0;
+  left: 0;
+  z-index: -1;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.mesh::before {
+  content: '';
+  position: absolute;
+  top: -20%;
+  left: -10%;
+  width: 60%;
+  height: 60%;
+  background: radial-gradient(circle, rgba(139, 92, 246, 0.08) 0%, transparent 70%);
+  filter: blur(80px);
+}
+
+.mesh::after {
+  content: '';
+  position: absolute;
+  bottom: -20%;
+  right: -10%;
+  width: 60%;
+  height: 60%;
+  background: radial-gradient(circle, rgba(59, 130, 246, 0.08) 0%, transparent 70%);
+  filter: blur(80px);
+}
+
+/* Tiptap Editor Styles */
+.ProseMirror {
+  outline: none !important;
+}
+
+.ProseMirror p.is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  float: left;
+  color: #374151;
+  pointer-events: none;
+  height: 0;
+}
+
+.prose pre {
+  @apply bg-white/5 border border-white/10 p-6 rounded-2xl font-mono text-sm my-6;
+}
+
+.prose blockquote {
+  @apply border-l-4 border-purple-500 pl-6 italic my-6 text-gray-400;
+}
+
+.prose ul {
+  @apply list-disc list-inside space-y-2 my-4;
+}
+
+.prose ol {
+  @apply list-decimal list-inside space-y-2 my-4;
+}
+
+.prose h1 { @apply text-4xl font-black tracking-tighter mb-8 mt-12; }
+.prose h2 { @apply text-3xl font-black tracking-tighter mb-6 mt-10; }
+.prose h3 { @apply text-2xl font-black tracking-tighter mb-4 mt-8; }
