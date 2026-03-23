@@ -2,41 +2,25 @@ import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 
 export async function GET(request: Request) {
-  const { searchParams, origin } = new URL(request.url)
-  const code = searchParams.get('code')
-  const next = searchParams.get('next') ?? '/dashboard'
-
-  console.log('[auth/callback] Received. code:', code ? 'present' : 'missing', 'origin:', origin)
+  const requestUrl = new URL(request.url)
+  const code = requestUrl.searchParams.get('code')
+  const next = requestUrl.searchParams.get('next') ?? '/dashboard'
 
   if (code) {
     try {
       const supabase = await createClient()
-      const { data, error } = await supabase.auth.exchangeCodeForSession(code)
+      const { error } = await supabase.auth.exchangeCodeForSession(code)
       
-      console.log('[auth/callback] exchangeCodeForSession result:', error ? error.message : 'success', 'user:', data?.user?.email)
-
       if (!error) {
-        const forwardedHost = request.headers.get('x-forwarded-host')
-        const isLocalEnv = process.env.NODE_ENV === 'development'
-        
-        const redirectTo = isLocalEnv
-          ? `${origin}${next}`
-          : forwardedHost
-            ? `https://${forwardedHost}${next}`
-            : `${origin}${next}`
-        
-        console.log('[auth/callback] Redirecting to:', redirectTo)
-        return NextResponse.redirect(redirectTo)
+        // Next.js handles requestUrl.origin correctly on Vercel
+        return NextResponse.redirect(`${requestUrl.origin}${next}`)
       } else {
-        console.error('[auth/callback] Auth error:', error.message, error.status)
-        return NextResponse.redirect(`${origin}/login?error=${encodeURIComponent(error.message)}`)
+        return NextResponse.redirect(`${requestUrl.origin}/login?error=${encodeURIComponent(error.message)}`)
       }
     } catch (e: any) {
-      console.error('[auth/callback] Exception:', e.message)
-      return NextResponse.redirect(`${origin}/login?error=${encodeURIComponent(e.message)}`)
+      return NextResponse.redirect(`${requestUrl.origin}/login?error=${encodeURIComponent('Exception occurred')}`)
     }
   }
 
-  console.log('[auth/callback] No code param found')
-  return NextResponse.redirect(`${origin}/login?error=no_code`)
+  return NextResponse.redirect(`${requestUrl.origin}/login?error=no_code`)
 }
